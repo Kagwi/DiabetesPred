@@ -104,6 +104,21 @@ def display_medical_disclaimer():
         </div>
     """, unsafe_allow_html=True)
 
+def display_acceptable_levels():
+    st.subheader("Acceptable Levels for Features")
+    acceptable_levels = {
+        "HbA1c Level": "Below 5.7%",
+        "Blood Glucose Level": "70-99 mg/dL (fasting)",
+        "BMI": "18.5 - 24.9 kg/m²",
+        "Age": "Varies (no specific threshold)",
+        "Hypertension": "Normal: Systolic <120 mmHg, Diastolic <80 mmHg",
+        "Heart Disease": "Avoidable with a healthy lifestyle",
+        "Smoking History": "Never smoked is optimal",
+        "Gender": "Not a modifiable factor"
+    }
+    for feature, level in acceptable_levels.items():
+        st.markdown(f"- **{feature}:** {level}")
+
 def main():
     st.title("Diabetes Risk Prediction System")
     st.markdown('<p class="header">Advanced Health Risk Assessment Tool</p>', unsafe_allow_html=True)
@@ -112,6 +127,9 @@ def main():
     display_medical_disclaimer()
 
     st.info("This tool uses machine learning to assess diabetes risk based on health metrics. Fill in the details below to analyze your risk.")
+
+    # Display acceptable levels
+    display_acceptable_levels()
 
     # User inputs
     col1, col2 = st.columns(2)
