@@ -57,7 +57,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-def plot_feature_importance():
+def plot_feature_importance_vertical():
     # Feature importance data
     features = ['HbA1c', 'Blood Glucose', 'Age', 'BMI', 'Hypertension', 
                 'Heart Disease', 'Smoking History', 'Gender']
@@ -68,24 +68,24 @@ def plot_feature_importance():
     cmap = ListedColormap(sns.color_palette("coolwarm", len(features)).as_hex())
 
     # Plot
-    plt.figure(figsize=(10, 6), facecolor='#121212')
+    plt.figure(figsize=(8, 6), facecolor='#121212')
     ax = plt.gca()
     ax.set_facecolor('#121212')
-    
-    bars = plt.barh(features, importance, color=cmap.colors)
+
+    bars = plt.bar(features, importance, color=cmap.colors, edgecolor='white', linewidth=0.7)
     plt.title('Feature Importance in Prediction', color='white', pad=20, fontsize=16, fontweight='bold')
-    plt.xlabel('Importance Score', color='white', fontsize=12)
-    plt.xticks(color='white')
-    plt.yticks(color='white', fontsize=12)
+    plt.ylabel('Importance Score', color='white', fontsize=12)
+    plt.xticks(color='white', fontsize=10, rotation=45)
+    plt.yticks(color='white', fontsize=10)
 
     for i, bar in enumerate(bars):
-        width = bar.get_width()
-        plt.text(width + 0.01, bar.get_y() + bar.get_height()/2, 
-                 f'{width:.1%}', 
-                 ha='left', va='center', color='white',
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2, height + 0.02, 
+                 f'{height:.1%}', 
+                 ha='center', va='bottom', color='white',
                  fontweight='bold', fontsize=10)
     
-    plt.grid(True, axis='x', linestyle='--', alpha=0.3, color='white')
+    plt.grid(True, axis='y', linestyle='--', alpha=0.3, color='white')
     for spine in ax.spines.values():
         spine.set_color('white')
         
@@ -172,7 +172,7 @@ def main():
 
                 # Display feature importance
                 st.subheader("Feature Importance Visualization")
-                st.pyplot(plot_feature_importance())
+                st.pyplot(plot_feature_importance_vertical())
 
             except Exception as e:
                 st.error(f"Error: {e}")
