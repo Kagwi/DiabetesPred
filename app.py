@@ -16,17 +16,19 @@ st.set_page_config(
 st.markdown("""
     <style>
     .main {
-        background-color: #f5f5f5;
+        background-color: #1B1C20;
+        color: white;
     }
     .stAlert {
         padding: 20px;
         border-radius: 10px;
+        background-color: #FF4B4B;
     }
     .css-1v0mbdj.ebxwdo61 {
         margin-top: 20px;
         padding: 20px;
         border-radius: 10px;
-        background-color: white;
+        background-color: #2C2F36;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .highlight {
@@ -35,7 +37,7 @@ st.markdown("""
         margin: 10px 0;
     }
     .header {
-        color: #1E88E5;
+        color: #4A90E2;
         font-weight: bold;
     }
     </style>
@@ -80,7 +82,12 @@ def main():
     st.warning("**MEDICAL DISCLAIMER**\nThis tool is for informational purposes only.")
     st.info("This tool uses machine learning to assess diabetes risk based on health metrics.")
     
+    # Input Section
+    st.subheader("Patient Information")
+    st.markdown('<p class="header">Please fill in the following details:</p>', unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
+
     with col1:
         gender = st.selectbox("Gender", ["Male", "Female"])
         age = st.number_input("Age", min_value=0, max_value=120, value=30)
@@ -93,18 +100,22 @@ def main():
         hypertension = st.selectbox("Hypertension", ["No", "Yes"])
         heart_disease = st.selectbox("Heart Disease", ["No", "Yes"])
 
+    # Prediction Button
     if st.button("Analyze Risk"):
         try:
             model = joblib.load("best_model.joblib")
+            
             gender_encoded = 1 if gender == "Male" else 0
             hypertension_encoded = 1 if hypertension == "Yes" else 0
             heart_disease_encoded = 1 if heart_disease == "Yes" else 0
             smoking_map = {"never": 0, "current": 1, "former": 2, "ever": 3, "No Info": 4}
             smoking_encoded = smoking_map[smoking_history]
 
+            # Create feature array
             input_data = np.array([[gender_encoded, age, hypertension_encoded, heart_disease_encoded, 
                                     smoking_encoded, bmi, hba1c, blood_glucose]])
 
+            # Get prediction
             prediction = model.predict(input_data)
             prediction_proba = model.predict_proba(input_data)[0][1]
 
@@ -112,6 +123,10 @@ def main():
             st.metric("Risk Level", risk_level)
             st.metric("Risk Probability", f"{prediction_proba:.1%}")
 
+            # Display feature importance plot
+            st.subheader("Feature Importance Visualization")
+            st.pyplot(plot_feature_importance())
+            
         except Exception as e:
             st.error(f"Error: {e}")
 
