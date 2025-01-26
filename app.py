@@ -1,236 +1,267 @@
 import streamlit as st
 import joblib
-import pandas as pd
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Set page config
+# Set page configuration
 st.set_page_config(
     page_title="Diabetes Risk Prediction",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Load the model
-@st.cache_resource
-def load_model():
-    return joblib.load("C:/Users/NEONSOL/Desktop/Python Essentials.dcdb3279-00a6-4417-aa79-92b4fa893829/best_model.joblib")
+# Custom CSS for better styling
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f5f5f5;
+    }
+    .stAlert {
+        padding: 20px;
+        border-radius: 10px;
+    }
+    .css-1v0mbdj.ebxwdo61 {
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .highlight {
+        padding: 20px;
+        border-radius: 10px;
+        margin: 10px 0;
+    }
+    .header {
+        color: #1E88E5;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-def get_risk_level(hba1c, glucose):
-    """Get clinical risk level based on medical guidelines"""
-    if hba1c >= 6.5 or glucose >= 126:
-        return "High"
-    elif hba1c >= 5.7 or glucose >= 100:
-        return "Moderate"
-    else:
-        return "Low"
+def plot_feature_importance():
+    # Feature importance data
+    features = ['HbA1c', 'Blood Glucose', 'Age', 'BMI', 'Hypertension', 
+                'Heart Disease', 'Smoking History', 'Gender']
+    importance = [0.643860, 0.317668, 0.021189, 0.009640, 0.004004, 
+                 0.002767, 0.000554, 0.000319]
+    
+    # Create figure with dark background
+    plt.figure(figsize=(10, 6), facecolor='#1B1C20')
+    ax = plt.gca()
+    ax.set_facecolor('#1B1C20')
+    
+    # Create horizontal bar plot
+    bars = plt.barh(features, importance, color='#4A90E2')
+    
+    # Customize plot
+    plt.title('Feature Importance in Prediction', color='white', pad=20)
+    plt.xlabel('Importance Score', color='white')
+    
+    # Customize ticks
+    plt.xticks(color='white')
+    plt.yticks(color='white')
+    
+    # Add value labels
+    for i, bar in enumerate(bars):
+        width = bar.get_width()
+        plt.text(width, bar.get_y() + bar.get_height()/2, 
+                f'{width:.1%}', 
+                ha='left', va='center', color='white',
+                fontweight='bold', fontsize=10,
+                bbox=dict(facecolor='#1B1C20', edgecolor='none', pad=5))
+    
+    # Customize grid
+    plt.grid(True, axis='x', linestyle='--', alpha=0.3, color='white')
+    
+    # Customize spines
+    for spine in ax.spines.values():
+        spine.set_color('white')
+        
+    plt.tight_layout()
+    return plt
+
+def plot_risk_profiles():
+    # Sample data
+    profiles = ['Very Healthy', 'Moderately Healthy', 'Borderline', 
+                'Slightly Elevated', 'High Risk', 'Very High Risk']
+    hba1c = [4.5, 5.2, 5.7, 6.0, 7.0, 8.0]
+    glucose = [80, 90, 100, 110, 160, 200]
+    
+    # Create figure with dark background
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5), facecolor='#1B1C20')
+    fig.patch.set_facecolor('#1B1C20')
+    
+    # Plot HbA1c
+    ax1.set_facecolor('#1B1C20')
+    ax1.plot(profiles, hba1c, marker='o', color='#4A90E2', linewidth=2)
+    ax1.set_title('HbA1c Levels by Risk Profile', color='white', pad=20)
+    ax1.set_ylabel('HbA1c Level', color='white')
+    ax1.tick_params(axis='both', colors='white')
+    ax1.grid(True, linestyle='--', alpha=0.3, color='white')
+    plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
+    
+    # Plot Glucose
+    ax2.set_facecolor('#1B1C20')
+    ax2.plot(profiles, glucose, marker='o', color='#4A90E2', linewidth=2)
+    ax2.set_title('Blood Glucose Levels by Risk Profile', color='white', pad=20)
+    ax2.set_ylabel('Blood Glucose Level', color='white')
+    ax2.tick_params(axis='both', colors='white')
+    ax2.grid(True, linestyle='--', alpha=0.3, color='white')
+    plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha='right')
+    
+    # Customize spines
+    for ax in [ax1, ax2]:
+        for spine in ax.spines.values():
+            spine.set_color('white')
+    
+    plt.tight_layout()
+    return plt
 
 def main():
-    st.title("Diabetes Risk Prediction")
-    st.write("Enter your health information for an AI-powered diabetes risk assessment")
+    # Header with custom styling
+    st.title("Diabetes Risk Prediction System")
+    st.markdown('<p class="header">Advanced Health Risk Assessment Tool</p>', unsafe_allow_html=True)
     
-    try:
-        model = load_model()
+    # Medical Disclaimer
+    st.warning("""
+        **MEDICAL DISCLAIMER**
         
-        # Create two columns for better layout
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.subheader("Primary Risk Factors")
-            hba1c = st.number_input(
-                "HbA1c Level (%)", 
-                min_value=4.0, 
-                max_value=9.0, 
-                value=5.5,
-                help="Normal: <5.7%, Prediabetes: 5.7-6.4%, Diabetes: ≥6.5%"
-            )
+        This tool provides an estimated risk assessment based on statistical analysis. It is not a substitute 
+        for professional medical diagnosis or advice. The predictions are based on a machine learning model 
+        and should be used only as a screening tool. Please consult with a qualified healthcare provider 
+        for proper medical evaluation and diagnosis.
+    """)
+    
+    # Information about the tool
+    st.info("""
+        This tool uses machine learning to assess diabetes risk based on various health metrics. 
+        The model considers multiple factors with different weights, with HbA1c and Blood Glucose 
+        levels being the most significant indicators.
+    """)
+    
+    # Input Section
+    st.subheader("Patient Information")
+    st.markdown('<p class="header">Please fill in the following details:</p>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Personal Information**")
+        gender = st.selectbox("Gender", ["Male", "Female"])
+        age = st.number_input("Age", min_value=0, max_value=120, value=30)
+        bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, value=25.0,
+                            help="Body Mass Index (weight in kg / height in m�)")
+        smoking_history = st.selectbox("Smoking History", 
+            ["never", "current", "former", "ever", "No Info"])
+
+    with col2:
+        st.markdown("**Medical Metrics**")
+        hba1c = st.number_input("HbA1c Level", min_value=3.0, max_value=10.0, value=5.0,
+                               help="Glycated hemoglobin level (percentage)")
+        blood_glucose = st.number_input("Blood Glucose Level", min_value=70, max_value=300, value=100,
+                                      help="Fasting blood glucose level (mg/dL)")
+        hypertension = st.selectbox("Hypertension", ["No", "Yes"])
+        heart_disease = st.selectbox("Heart Disease", ["No", "Yes"])
+
+    # Prediction Button
+    if st.button("Analyze Risk", help="Click to analyze diabetes risk based on provided information"):
+        try:
+            model = joblib.load("best_model.joblib")
             
-            glucose = st.number_input(
-                "Blood Glucose Level (mg/dL)", 
-                min_value=70, 
-                max_value=300, 
-                value=100,
-                help="Normal: <100, Prediabetes: 100-125, Diabetes: ≥126"
-            )
+            # Data preprocessing
+            gender_encoded = 1 if gender == "Male" else 0
+            hypertension_encoded = 1 if hypertension == "Yes" else 0
+            heart_disease_encoded = 1 if heart_disease == "Yes" else 0
             
-            bmi = st.number_input(
-                "BMI", 
-                min_value=15.0, 
-                max_value=50.0, 
-                value=25.0,
-                help="Normal: <25, Overweight: 25-29.9, Obese: ≥30"
-            )
-            
-            age = st.number_input(
-                "Age", 
-                min_value=18, 
-                max_value=100, 
-                value=30,
-                help="Age in years"
-            )
-        
-        with col2:
-            st.subheader("Additional Factors")
-            gender = st.radio(
-                "Gender",
-                options=["Female", "Male"],
-                horizontal=True,
-                help="Select biological gender"
-            )
-            
-            hypertension = st.radio(
-                "Hypertension",
-                options=["No", "Yes"],
-                horizontal=True,
-                help="Do you have high blood pressure?"
-            )
-            
-            heart_disease = st.radio(
-                "Heart Disease",
-                options=["No", "Yes"],
-                horizontal=True,
-                help="Do you have any heart disease?"
-            )
-            
-            smoking_history = st.selectbox(
-                "Smoking History",
-                options=["never", "former", "current", "not current", "ever", "No Info"],
-                help="Select your smoking status"
-            )
-        
-        if st.button("Predict Risk", use_container_width=True):
-            # Prepare features for the model
-            features = pd.DataFrame([[
-                1 if gender == "Male" else 0,
-                age,
-                1 if hypertension == "Yes" else 0,
-                1 if heart_disease == "Yes" else 0,
-                {"never": 0, "former": 1, "current": 2, 
-                 "not current": 3, "ever": 4, "No Info": 5}[smoking_history],
-                bmi,
-                hba1c,
-                glucose
-            ]], columns=['gender', 'age', 'hypertension', 'heart_disease', 
-                        'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level'])
-            
-            # Get model prediction and clinical risk level
-            prediction = model.predict(features)[0]
-            clinical_risk = get_risk_level(hba1c, glucose)
-            
+            smoking_map = {
+                "never": 0, "current": 1, "former": 2, "ever": 3, "No Info": 4
+            }
+            smoking_encoded = smoking_map[smoking_history]
+
+            # Create feature array
+            input_data = np.array([[
+                gender_encoded, age, hypertension_encoded, heart_disease_encoded,
+                smoking_encoded, bmi, hba1c, blood_glucose
+            ]])
+
+            # Get prediction
+            prediction = model.predict(input_data)
+            prediction_proba = model.predict_proba(input_data)[0][1]
+
             # Display results
-            st.markdown("---")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.subheader("AI Model Prediction")
-                if prediction == 1:
-                    st.warning("Higher Risk Indicated")
-                    st.markdown("""
-                    **Recommended Actions:**
-                    - Consult with a healthcare provider
-                    - Get comprehensive diabetes screening
-                    - Review lifestyle factors
-                    """)
-                else:
-                    st.success("Lower Risk Indicated")
-                    st.markdown("""
-                    **Recommendations:**
-                    - Maintain healthy lifestyle
-                    - Continue regular check-ups
-                    - Monitor for changes
-                    """)
-            
-            with col2:
-                st.subheader("Clinical Guidelines")
-                if clinical_risk == "High":
-                    st.error("Clinical High Risk")
-                    st.write("Your HbA1c or glucose levels are in the high-risk range")
-                elif clinical_risk == "Moderate":
-                    st.warning("Clinical Moderate Risk")
-                    st.write("Your levels indicate pre-diabetes range")
-                else:
-                    st.success("Clinical Low Risk")
-                    st.write("Your levels are within normal range")
-            
-            # Display key metrics
-            st.markdown("---")
-            st.subheader("Key Metrics Analysis")
+            st.subheader("Risk Assessment Results")
+            st.markdown('<p class="header">Analysis Complete</p>', unsafe_allow_html=True)
             
             # Create three columns for metrics
-            m1, m2, m3 = st.columns(3)
+            col1, col2, col3 = st.columns(3)
             
-            with m1:
-                st.metric(
-                    "HbA1c",
-                    f"{hba1c}%",
-                    delta=f"{hba1c - 5.7:.1f}% from threshold",
-                    delta_color="inverse"
-                )
+            risk_level = "High Risk" if prediction[0] == 1 else "Low Risk"
+            risk_color = "#FF4B4B" if prediction[0] == 1 else "#00CC96"
             
-            with m2:
-                st.metric(
-                    "Blood Glucose",
-                    f"{glucose} mg/dL",
-                    delta=f"{glucose - 100:.0f} from threshold",
-                    delta_color="inverse"
-                )
+            with col1:
+                st.metric("Risk Level", risk_level)
+            with col2:
+                st.metric("Risk Probability", f"{prediction_proba:.1%}")
+            with col3:
+                st.metric("Confidence", f"{max(prediction_proba, 1-prediction_proba):.1%}")
+
+            # Risk interpretation
+            if prediction[0] == 1:
+                st.error("""
+                    ### High Risk Detected
+                    The model indicates an elevated risk of diabetes. It is strongly recommended to:
+                    1. Consult with a healthcare provider for proper medical evaluation
+                    2. Consider getting a comprehensive diabetes screening
+                    3. Discuss lifestyle modifications with your doctor
+                """)
+            else:
+                st.success("""
+                    ### Low Risk Detected
+                    The model indicates a lower risk of diabetes. Recommendations:
+                    1. Continue maintaining a healthy lifestyle
+                    2. Regular check-ups with your healthcare provider
+                    3. Stay active and maintain a balanced diet
+                """)
+
+            # Visualizations
+            st.subheader("Risk Analysis Visualization")
+            st.markdown('<p class="header">Data Insights</p>', unsafe_allow_html=True)
             
-            with m3:
-                st.metric(
-                    "BMI",
-                    f"{bmi:.1f}",
-                    delta=f"{bmi - 25:.1f} from normal range",
-                    delta_color="inverse"
-                )
+            # Feature importance plot
+            st.markdown("#### Feature Importance")
+            st.pyplot(plot_feature_importance())
             
-            # Display feature importance
-            st.markdown("---")
-            st.subheader("Risk Factors Analysis")
+            # Risk profiles plot
+            st.markdown("#### Risk Profiles Reference")
+            st.pyplot(plot_risk_profiles())
             
-            importance_values = [0.029, 2.224, 0.405, 0.263, 0.055, 0.949, 64.059, 32.016]
-            importance_df = pd.DataFrame({
-                "Factor": ["Gender", "Age", "Hypertension", "Heart Disease", 
-                          "Smoking History", "BMI", "HbA1c Level", "Blood Glucose Level"],
-                "Importance (%)": importance_values
-            })
-            importance_df = importance_df.sort_values("Importance (%)", ascending=True)
-            
-            # Create a horizontal bar chart
-            fig, ax = plt.subplots(figsize=(10, 6))
-            bars = ax.barh(importance_df["Factor"], importance_df["Importance (%)"])
-            
-            # Customize chart
-            ax.set_xlabel("Importance (%)")
-            ax.set_title("Feature Importance in Risk Prediction")
-            
-            # Add value labels on the bars
-            for bar in bars:
-                width = bar.get_width()
-                ax.text(width, bar.get_y() + bar.get_height()/2,
-                       f"{width:.1f}%",
-                       ha='left', va='center')
-            
-            st.pyplot(fig)
-            
-            # Additional information
-            st.markdown("---")
-            st.subheader("Understanding Your Results")
+            # Additional Information
             st.info("""
-            This assessment combines:
-            1. AI Model Prediction based on all provided factors
-            2. Clinical Guidelines based on standard medical thresholds
-            
-            **Key Thresholds:**
-            - HbA1c: Normal < 5.7%, Pre-diabetes 5.7-6.4%, Diabetes ≥ 6.5%
-            - Blood Glucose: Normal < 100, Pre-diabetes 100-125, Diabetes ≥ 126 mg/dL
-            - BMI: Normal < 25, Overweight 25-29.9, Obese ≥ 30
-            
-            *This tool provides risk assessment based on available data but should not be considered a diagnosis. 
-            Always consult healthcare professionals for proper medical evaluation.*
+                **Understanding Your Results**
+                
+                The prediction is based on these key factors (in order of importance):
+                1. HbA1c Level (64.4%) - Most significant indicator
+                2. Blood Glucose (31.8%) - Second most important factor
+                3. Age (2.1%) - Third most influential factor
+                
+                Other factors like BMI, hypertension, heart disease, smoking history, and gender 
+                contribute to the overall prediction but have less impact on the final result.
             """)
             
-    except Exception as e:
-        st.error(f"Error: {str(e)}")
-        st.write("Please ensure all inputs are valid.")
+            # Final Disclaimer
+            st.warning("""
+                **Important Notice**
+                
+                This risk assessment is based on a machine learning model and should not be used as the sole basis 
+                for medical decisions. The model has limitations and may not account for all possible factors 
+                affecting diabetes risk. Always consult with healthcare professionals for proper medical advice 
+                and diagnosis.
+            """)
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
     main()
