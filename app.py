@@ -7,7 +7,7 @@ import seaborn as sns
 
 # Set page configuration
 st.set_page_config(
-    page_title="Diabetes Risk Prediction",
+    page_title="Employee Attrition Predictor",
     layout="centered",
     initial_sidebar_state="expanded"
 )
@@ -57,110 +57,96 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-def plot_feature_importance_vertical():
-    # Feature importance data
-    features = ['HbA1c', 'Blood Glucose', 'Age', 'BMI', 'Hypertension', 
-                'Heart Disease', 'Smoking History', 'Gender']
-    importance = [0.643860, 0.317668, 0.021189, 0.009640, 0.004004, 
-                  0.002767, 0.000554, 0.000319]
 
-    # Create gradient colors
-    cmap = ListedColormap(sns.color_palette("coolwarm", len(features)).as_hex())
+def load_model():
+    """Load the trained attrition prediction model."""
+    try:
+        return joblib.load("best_model_random_forest.pkl")
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None
 
-    # Plot
-    plt.figure(figsize=(8, 6), facecolor='#121212')
-    ax = plt.gca()
-    ax.set_facecolor('#121212')
 
-    bars = plt.bar(features, importance, color=cmap.colors, edgecolor='white', linewidth=0.7)
-    plt.title('Feature Importance in Prediction', color='white', pad=20, fontsize=16, fontweight='bold')
-    plt.ylabel('Importance Score', color='white', fontsize=12)
-    plt.xticks(color='white', fontsize=10, rotation=45)
-    plt.yticks(color='white', fontsize=10)
+def plot_feature_importance(model):
+    """Plot feature importance for the model."""
+    if hasattr(model, 'feature_importances_'):
+        features = ['Age', 'Job Level', 'Total Working Years', 'Years at Company', 'Overtime', 'Job Satisfaction']
+        importance = model.feature_importances_
 
-    for i, bar in enumerate(bars):
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2, height + 0.02, 
-                 f'{height:.1%}', 
-                 ha='center', va='bottom', color='white',
-                 fontweight='bold', fontsize=10)
-    
-    plt.grid(True, axis='y', linestyle='--', alpha=0.3, color='white')
-    for spine in ax.spines.values():
-        spine.set_color('white')
-        
-    plt.tight_layout()
-    return plt
+        cmap = ListedColormap(sns.color_palette("coolwarm", len(features)).as_hex())
 
-def display_medical_disclaimer():
+        plt.figure(figsize=(8, 6), facecolor='#121212')
+        ax = plt.gca()
+        ax.set_facecolor('#121212')
+
+        bars = plt.bar(features, importance, color=cmap.colors, edgecolor='white', linewidth=0.7)
+        plt.title('Feature Importance in Prediction', color='white', pad=20, fontsize=16, fontweight='bold')
+        plt.ylabel('Importance Score', color='white', fontsize=12)
+        plt.xticks(color='white', fontsize=10, rotation=45)
+        plt.yticks(color='white', fontsize=10)
+
+        for i, bar in enumerate(bars):
+            height = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width() / 2, height + 0.02, f'{height:.1%}', ha='center', va='bottom', color='white', fontweight='bold', fontsize=10)
+
+        plt.grid(True, axis='y', linestyle='--', alpha=0.3, color='white')
+        for spine in ax.spines.values():
+            spine.set_color('white')
+
+        plt.tight_layout()
+        return plt
+    else:
+        st.warning("Feature importance data not available.")
+
+
+def display_hr_disclaimer():
+    """Display a disclaimer about the limitations of the prediction model."""
     st.markdown("""
         <div class="card">
-        <h3 style="color: #FF4B4B;">Medical Disclaimer</h3>
+        <h3 style="color: #FF4B4B;">HR Disclaimer</h3>
         <p style="color: white; font-size: 14px;">
-        This tool is for informational purposes only and does not substitute professional medical advice, diagnosis, or treatment.
-        Always seek the advice of a qualified healthcare provider with any questions about your health. 
-        If you are at high risk based on this prediction, consult a healthcare professional for further evaluation.
+        This tool provides a prediction for employee attrition risk based on available data.
+        It should not be used as the sole determinant for HR decisions. For best results,
+        consult HR professionals and consider other qualitative factors.
         </p>
         </div>
     """, unsafe_allow_html=True)
 
-def display_acceptable_levels():
-    st.subheader("Acceptable Levels for Features")
-    acceptable_levels = {
-        "HbA1c Level": "Below 5.7%",
-        "Blood Glucose Level": "70-99 mg/dL (fasting)",
-        "BMI": "18.5 - 24.9 kg/m²",
-        "Age": "Varies (no specific threshold)",
-        "Hypertension": "Normal: Systolic <120 mmHg, Diastolic <80 mmHg",
-        "Heart Disease": "Avoidable with a healthy lifestyle",
-        "Smoking History": "Never smoked is optimal",
-        "Gender": "Not a modifiable factor"
-    }
-    for feature, level in acceptable_levels.items():
-        st.markdown(f"- **{feature}:** {level}")
 
 def main():
-    st.title("Diabetes Risk Prediction System")
-    st.markdown('<p class="header">Advanced Health Risk Assessment Tool</p>', unsafe_allow_html=True)
+    st.title("Employee Attrition Predictor")
+    st.markdown('<p class="header">AI-Powered Employee Retention Insights</p>', unsafe_allow_html=True)
 
-    # Display medical disclaimer
-    display_medical_disclaimer()
+    # Load the model
+    model = load_model()
+    if model is None:
+        return
 
-    st.info("This tool uses machine learning to assess diabetes risk based on health metrics. Fill in the details below to analyze your risk.")
+    # Display disclaimer
+    display_hr_disclaimer()
 
-    # Display acceptable levels
-    display_acceptable_levels()
+    st.info("This tool predicts employee attrition risk based on job-related metrics. Fill in the details below to analyze attrition risk.")
 
     # User inputs
     col1, col2 = st.columns(2)
 
     with col1:
-        gender = st.selectbox("Gender", ["Male", "Female"])
-        age = st.number_input("Age", min_value=0, max_value=120, value=30)
-        bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, value=25.0)
-        smoking_history = st.selectbox("Smoking History", ["never", "current", "former", "ever", "No Info"])
+        age = st.number_input("Age", min_value=18, max_value=65, value=30)
+        job_level = st.selectbox("Job Level", [1, 2, 3, 4, 5])
+        total_working_years = st.number_input("Total Working Years", min_value=0, max_value=40, value=5)
 
     with col2:
-        hba1c = st.number_input("HbA1c Level", min_value=3.0, max_value=10.0, value=5.0)
-        blood_glucose = st.number_input("Blood Glucose Level", min_value=70, max_value=300, value=100)
-        hypertension = st.selectbox("Hypertension", ["No", "Yes"])
-        heart_disease = st.selectbox("Heart Disease", ["No", "Yes"])
+        years_at_company = st.number_input("Years at Company", min_value=0, max_value=40, value=3)
+        overtime = st.selectbox("Overtime", ["No", "Yes"])
+        job_satisfaction = st.selectbox("Job Satisfaction (1-Low to 4-High)", [1, 2, 3, 4])
 
     if st.button("Analyze Risk"):
         with st.spinner('Analyzing...'):
             try:
-                # Load the model
-                model = joblib.load("best_model.joblib")
+                # Encode categorical variables
+                overtime_encoded = 1 if overtime == "Yes" else 0
 
-                # Encode input
-                gender_encoded = 1 if gender == "Male" else 0
-                hypertension_encoded = 1 if hypertension == "Yes" else 0
-                heart_disease_encoded = 1 if heart_disease == "Yes" else 0
-                smoking_map = {"never": 0, "current": 1, "former": 2, "ever": 3, "No Info": 4}
-                smoking_encoded = smoking_map[smoking_history]
-
-                input_data = np.array([[gender_encoded, age, hypertension_encoded, heart_disease_encoded, 
-                                        smoking_encoded, bmi, hba1c, blood_glucose]])
+                input_data = np.array([[age, job_level, total_working_years, years_at_company, overtime_encoded, job_satisfaction]])
 
                 # Prediction
                 prediction = model.predict(input_data)
@@ -168,32 +154,33 @@ def main():
 
                 risk_level = "High Risk" if prediction[0] == 1 else "Low Risk"
                 st.metric("Risk Level", risk_level)
-                st.metric("Risk Probability", f"{prediction_proba:.1%}")
+                st.metric("Attrition Probability", f"{prediction_proba:.1%}")
 
                 # Recommendations
-                st.subheader("Recommendations")
+                st.subheader("Retention Strategies")
                 if prediction[0] == 1:
                     st.warning("""
-                        - Schedule an appointment with a healthcare provider immediately.
-                        - Monitor your blood glucose levels regularly.
-                        - Adopt a balanced diet low in sugar and high in fiber.
-                        - Incorporate at least 30 minutes of physical activity into your daily routine.
-                        - Avoid smoking and reduce alcohol consumption.
+                        - Conduct one-on-one employee engagement meetings.
+                        - Provide opportunities for professional growth and training.
+                        - Offer flexible working arrangements to improve work-life balance.
+                        - Address job satisfaction concerns and career progression paths.
+                        - Implement recognition programs to appreciate employees' contributions.
                     """)
                 else:
                     st.success("""
-                        - Maintain your current healthy lifestyle.
-                        - Continue regular check-ups with your healthcare provider.
-                        - Stay hydrated and avoid excessive sugar intake.
-                        - Engage in regular physical activity and maintain a balanced diet.
+                        - Continue fostering a positive work environment.
+                        - Maintain an open feedback system with employees.
+                        - Encourage mentorship and leadership development programs.
+                        - Regularly review compensation and benefits.
                     """)
 
                 # Display feature importance
                 st.subheader("Feature Importance Visualization")
-                st.pyplot(plot_feature_importance_vertical())
+                st.pyplot(plot_feature_importance(model))
 
             except Exception as e:
                 st.error(f"Error: {e}")
+
 
 if __name__ == "__main__":
     main()
