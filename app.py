@@ -149,7 +149,7 @@ def main():
 
     if st.button("Analyze Risk"):
         try:
-            model = joblib.load("best_model.joblib")
+            model = joblib.load("the_best_model_name.joblib")
 
             # Preprocess input
             gender_encoded = 1 if gender == "Male" else 0
