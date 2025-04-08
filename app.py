@@ -61,7 +61,7 @@ st.markdown("""
 def load_model():
     """Load the trained attrition prediction model."""
     try:
-        return joblib.load("best_model_random_forest.pkl")
+        return joblib.load("best_model.joblib")
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
