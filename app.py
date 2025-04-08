@@ -3,7 +3,7 @@ import joblib
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Configure dark mode layout
+# Configure layout
 st.set_page_config(
     page_title="Diabetes Risk Prediction",
     layout="wide",
@@ -48,7 +48,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Plotting functions remain unchanged since they already use dark colors
+# Plotting functions 
 def plot_feature_importance():
     features = ['HbA1c', 'Blood Glucose', 'Age', 'BMI', 'Hypertension',
                 'Heart Disease', 'Smoking History', 'Gender']
@@ -105,10 +105,9 @@ def plot_risk_profiles():
     plt.tight_layout()
     return plt
 
-# Main app logic (same functionality)
+# Main app logic 
 def main():
     st.title("🩺 Diabetes Risk Prediction")
-    st.markdown('<p class="header">AI-powered Health Risk Screening (Dark Mode)</p>', unsafe_allow_html=True)
 
     st.warning("This tool provides a preliminary risk estimate. Please consult a licensed doctor for medical advice.")
 
